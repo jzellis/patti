@@ -1,0 +1,6 @@
+[Unit]
+Description=Copy the Kowloon repos for Patti's questions (kowloon_sync.sh)
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash %h/patti/kowloon_sync.sh

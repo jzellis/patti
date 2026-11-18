@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""facectl -- drive Patti's face from the Pi.
+
+    facectl smile
+    facectl say "HELLO I AM PATTI"
+    facectl image ~/pictures/logo.png --no-dither
+    facectl preview smile out.png      # render locally, no hardware needed
+    facectl info                       # hostname, IPs, uptime, temp, mem, disk
+    facectl snap                       # webcam still, cropped and dithered
+    facectl sense --every 60           # Sense HAT readings, updated each minute
+    facectl status
+"""
+
+import argparse
+import os
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from robotface import expressions, protocol, render   # noqa: E402
+
+
+def connect(args):
+    from robotface.client import FaceClient
+    return FaceClient(port=args.port)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(
+        prog="facectl", description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--port", help="serial device (default: autodetect)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    for name in protocol.PRESETS:
+        p = sub.add_parser(name, help="show the %s expression" % name)
+        p.set_defaults(preset=name)
+
+    p = sub.add_parser("say", help="render text on the Pi and send it")
+    p.add_argument("text")
+    p.add_argument("--size", type=int, help="point size (default: auto-fit)")
+    p.add_argument("--font", help="path to a TTF")
+    p.add_argument("--align", choices=("center", "left"), default="center")
+    p.add_argument("--on-pico", action="store_true",
+                   help="use the Pico's built-in blocky font instead")
+    p.add_argument("--scale", type=int, default=3, help="scale for --on-pico")
+
+    p = sub.add_parser("image", help="send an image file")
+    p.add_argument("path")
+    p.add_argument("--no-dither", action="store_true",
+                   help="threshold instead of dithering (better for line art)")
+    p.add_argument("--invert", action="store_true")
+    p.add_argument("--stretch", action="store_true")
+
+    p = sub.add_parser("preview", help="render locally to a PNG, no hardware")
+    p.add_argument("what", help="a preset name, 'info', 'sense', 'text:<string>', "
+                                "or an image path")
+    p.add_argument("out", help="output PNG path")
+    p.add_argument("--scale", type=int, default=3, help="upscale the PNG NxN")
+
+    sub.add_parser("info", help="show this host's IPs and system stats")
+
+    p = sub.add_parser("sense", help="show every Sense HAT sensor reading")
+    p.add_argument("--every", type=float, metavar="SECS",
+                   help="keep updating every SECS (the Pico holds anything "
+                        "inside its %ds refresh floor)" % protocol.MIN_REFRESH_INTERVAL_S)
+
+    p = sub.add_parser("snap", help="grab a webcam frame and show it")
+    p.add_argument("--camera", help="V4L2 device (default: gimbal cam, else first camera)")
+    p.add_argument("--no-dither", action="store_true", help="hard threshold instead")
+    p.add_argument("--invert", action="store_true")
+    p.add_argument("--save", metavar="PNG", help="also save the 1-bit image here")
+    p.add_argument("--dry-run", action="store_true",
+                   help="don't send to the panel (use with --save)")
+    sub.add_parser("clear", help="blank the panel to white")
+    sub.add_parser("refresh", help="re-apply the current image now")
+    sub.add_parser("status", help="print firmware status")
+    sub.add_parser("ping", help="check the link")
+    sub.add_parser("presets", help="list the preset names")
+
+    args = ap.parse_args(argv)
+
+    if args.cmd == "presets":
+        print(" ".join(expressions.NAMES))
+        return 0
+
+    if args.cmd == "preview":
+        what = args.what
+        if what in expressions.NAMES:
+            img = render.expression_image(what)
+        elif what == "info":
+            from robotface import sysinfo
+            img = render.info_image(*sysinfo.gather())
+        elif what == "sense":
+            from robotface import sensehat
+            img = render.sense_image(*sensehat.gather())
+        elif what.startswith("text:"):
+            img = render.text_image(what[5:])
+        else:
+            img = render.image_file(what)
+        if args.scale > 1:
+            from PIL import Image
+            img = img.resize(
+                (img.width * args.scale, img.height * args.scale), Image.NEAREST)
+        img.save(args.out)
+        print("wrote %s (%dx%d)" % (args.out, img.width, img.height))
+        return 0
+
+    if args.cmd == "snap":
+        from robotface import camera
+        path = camera.snap(args.camera)
+        try:
+            img = render.image_file(path, dither=not args.no_dither,
+                                    invert=args.invert, fit="cover",
+                                    autocontrast=True)
+        finally:
+            os.unlink(path)
+        if args.save:
+            img.save(args.save)
+            print("wrote %s" % args.save)
+        if args.dry_run:
+            return 0
+        with connect(args) as face:
+            print(face.frame(render.pack(img)))
+        return 0
+
+    with connect(args) as face:
+        if getattr(args, "preset", None):
+            print(face.preset(args.preset))
+        elif args.cmd == "say":
+            if args.on_pico:
+                print(face.pico_text(args.text, args.scale))
+            else:
+                print(face.frame(render.text(
+                    args.text, font_path=args.font, size=args.size,
+                    align=args.align)))
+        elif args.cmd == "image":
+            img = render.image_file(
+                args.path, dither=not args.no_dither, invert=args.invert,
+                fit="stretch" if args.stretch else "contain")
+            print(face.frame(render.pack(img)))
+        elif args.cmd == "info":
+            print(face.frame(render.info()))
+        elif args.cmd == "sense":
+            while True:
+                print(face.frame(render.sense()), flush=True)
+                if not args.every:
+                    break
+                time.sleep(max(args.every, protocol.MIN_REFRESH_INTERVAL_S))
+        elif args.cmd == "clear":
+            print(face.clear())
+        elif args.cmd == "refresh":
+            print(face.refresh())
+        elif args.cmd == "ping":
+            print(face.ping())
+        elif args.cmd == "status":
+            for k, v in sorted(face.status().items()):
+                print("%-10s %s" % (k, v))
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
+    except Exception as exc:            # noqa: BLE001 - CLI boundary
+        print("facectl: %s" % exc, file=sys.stderr)
+        sys.exit(1)

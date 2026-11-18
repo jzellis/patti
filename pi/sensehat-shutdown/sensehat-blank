@@ -1,0 +1,12 @@
+#!/bin/sh
+# Blank the Sense HAT matrix as the very last step of a shutdown, so the red
+# "shutting down" light goes out when it's safe to pull the power. (The HAT's
+# own chip keeps showing the last image for as long as it has 5 V, and a
+# halted Pi still gives it 5 V.) systemd runs this from system-shutdown/ just
+# before halting, with the filesystems already read-only.
+for f in /sys/class/graphics/fb*/name; do
+    if [ "$(cat "$f")" = "RPi-Sense FB" ]; then
+        dev=/dev/$(basename "$(dirname "$f")")
+        head -c 128 /dev/zero > "$dev"      # 8x8 pixels, 16 bits each
+    fi
+done

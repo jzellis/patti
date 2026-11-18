@@ -1,0 +1,17 @@
+[Unit]
+Description=Patti's walkie-talkie channel (Claude Code in tmux)
+Wants=network-online.target
+After=network-online.target tailscaled.service rp-walkie-firewall.service
+
+[Service]
+Type=forking
+User=@USER@
+ExecStart=/usr/bin/tmux new-session -d -s walkie -x 200 -y 50 @HOME@/robotpattinson/pi/walkie/start.sh
+# Answers Claude Code's development-channel warning (confirm.sh)
+ExecStartPost=@HOME@/robotpattinson/pi/walkie/confirm.sh
+ExecStop=/usr/bin/tmux kill-session -t walkie
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

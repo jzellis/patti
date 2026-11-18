@@ -1,0 +1,14 @@
+[Unit]
+Description=Patti's mind while her body's off (brain/mind.py: Telegram from friday when the Pi can't be reached)
+After=network-online.target patti-ask.service
+Wants=network-online.target
+
+[Service]
+# her brain's code lives in ~/patti/mind (brain/, vision/host/, motors/tools/ from the repo); its own venv
+WorkingDirectory=%h/patti/mind/brain
+ExecStart=%h/patti/mindvenv/bin/python -u mind.py
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=default.target

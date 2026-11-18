@@ -1,0 +1,10 @@
+[Unit]
+Description=Patti's corpus (~/patti/corpus, corpus.py) copied to Google Drive: My Drive/Patti/corpus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# rclone's gdrive: remote is rooted at the ebooks folder; --drive-root-folder-id root points this one copy at the
+# top of My Drive instead (the remote itself is left alone). copy, not sync: nothing on Drive is ever deleted.
+ExecStart=/usr/bin/rclone copy --drive-root-folder-id root %h/patti/corpus gdrive:Patti/corpus

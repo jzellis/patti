@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*.uf2
+# Waveshare reference downloads
+Pico_ePaper_Code.zip
+Pico_ePaper_Code/

@@ -1,0 +1,11 @@
+[Unit]
+Description=Patti AirPlay speaker (shairport-sync)
+After=pipewire-pulse.service
+
+[Service]
+ExecStart=/usr/bin/shairport-sync -c %h/.config/robotpattinson/shairport-sync.conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

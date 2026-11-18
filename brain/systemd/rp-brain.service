@@ -1,0 +1,20 @@
+[Unit]
+Description=Patti's brain (web control page)
+# The server listens on the Tailscale address, so wait for Tailscale. If the
+# address isn't up yet it exits and systemd tries again in 5 s.
+Wants=network-online.target
+After=network-online.target tailscaled.service
+# Sound (her voice) goes through the user's PipeWire, which runs at boot
+# because install.sh turns on lingering for the user.
+After=user@@UID@.service
+
+[Service]
+User=@USER@
+ExecStart=/usr/bin/python3 @HOME@/robotpattinson/brain/server.py
+Environment=PYTHONUNBUFFERED=1
+Environment=XDG_RUNTIME_DIR=/run/user/@UID@
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

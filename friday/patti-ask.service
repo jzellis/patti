@@ -1,0 +1,11 @@
+[Unit]
+Description=Patti's questions for Claude (ask_claude.py)
+After=network-online.target
+
+[Service]
+ExecStart=%h/patti/venv/bin/python %h/patti/ask_claude.py --bind 100.64.0.10
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

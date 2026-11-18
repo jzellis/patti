@@ -1,0 +1,12 @@
+[Unit]
+Description=Shut down when the Sense HAT joystick is held in
+After=systemd-modules-load.service
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/sensehat_shutdown.py
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

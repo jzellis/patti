@@ -1,0 +1,12 @@
+[Unit]
+Description=Turn off Sense HAT LEDs at boot
+# Plymouth's boot splash draws onto the Sense HAT (the only framebuffer on a
+# headless Pi) and leaves its last frame lit, so clear after it has quit.
+After=systemd-modules-load.service plymouth-quit-wait.service plymouth-quit.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/sensehat_off.py
+
+[Install]
+WantedBy=multi-user.target

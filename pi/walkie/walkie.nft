@@ -1,0 +1,10 @@
+# The walkie channel's ports (7700-7709) answer over Tailscale only: the app's
+# traffic isn't encrypted itself, so never on a shared wifi.
+table inet rp_walkie
+delete table inet rp_walkie
+table inet rp_walkie {
+    chain input {
+        type filter hook input priority 0; policy accept;
+        tcp dport 7700-7709 iifname != { "lo", "tailscale0" } drop
+    }
+}

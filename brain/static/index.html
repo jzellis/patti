@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Patti</title>
+<style>
+  /* Icons: Material Symbols Rounded (Apache 2.0), cut down to the icons below by Google Fonts'
+     icon_names= (static/fonts/symbols.woff2). Using a new one? Fetch the font again with it added:
+     account_circle control_camera delete download expand_more face favorite filter_center_focus forum
+     front_hand gamepad group headphones headset_mic hearing hearing_disabled help link location_on logout
+     mic mic_off mood person_search play_arrow radio_button_checked receipt_long self_improvement send speed
+     stop table_restaurant terminal toys video_library videocam visibility voice_over_off volume_off volume_up */
+  @font-face { font-family: "Symbols"; font-style: normal; font-weight: 300 500; font-display: block;
+    src: url(/static/fonts/symbols.woff2) format("woff2"); }
+  i { font: normal 400 22px/1 "Symbols"; font-variation-settings: "FILL" 0, "opsz" 24;
+    display: inline-block; width: 1em; overflow: hidden; white-space: nowrap; direction: ltr;
+    -webkit-font-feature-settings: "liga"; font-feature-settings: "liga"; -webkit-font-smoothing: antialiased;
+    flex: none; }
+  .on > i, i.fill { font-variation-settings: "FILL" 1, "opsz" 24; }
+
+  :root {
+    --bg: #111; --panel: #1c1c1c; --panel2: #262626; --line: #333; --text: #eee; --dim: #999;
+    --accent: #d9622b; --blue: #3a8fd9; --stop: #c62828; --ok: #4caf50; --warn: #e0a030;
+    --bar: 52px; --nav: 58px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px system-ui, sans-serif; -webkit-user-select: none; user-select: none;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { opacity: .5; }
+
+  /* ---- the app bar (top) and the tab bar (bottom) */
+  header { position: sticky; top: 0; z-index: 5; height: calc(var(--bar) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 12px 0; display: flex; align-items: center; gap: 10px;
+    background: #111e; backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  h1 { font-size: 18px; margin: 0; }
+  #status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--dim); font-size: 12px; }
+  #status i { font-size: 18px; }
+  .st { color: var(--dim); }
+  .st[data-s=ok] { color: var(--ok); } .st[data-s=warn] { color: var(--warn); } .st[data-s=bad] { color: var(--stop); }
+  #heard { flex: 1; min-width: 0; color: var(--text); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #pico { color: var(--warn); white-space: nowrap; }
+  #me { display: flex; align-items: center; gap: 2px; color: var(--dim); font-size: 12px; }
+  #me a, .hdr-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+    color: var(--dim); background: none; border: 0; padding: 0; text-decoration: none; }
+  .hdr-btn.on { color: var(--accent); }
+  #tabs { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; height: calc(var(--nav) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom); display: flex; justify-content: center;
+    background: #161616f0; backdrop-filter: blur(8px); border-top: 1px solid var(--line); }
+  #tabs button { flex: 1; max-width: 120px; display: grid; justify-items: center; align-content: center; gap: 2px;
+    border: 0; background: none; color: var(--dim); font-size: 11px; padding: 0; }
+  #tabs button i { width: 56px; padding: 3px 0; border-radius: 14px; text-align: center; }
+  #tabs button.on { color: var(--text); }
+  #tabs button.on i { background: #d9622b33; color: var(--accent); }
+  .cant-watch.cant-drive [data-tab=controls], .cant-chat [data-tab=chat],
+  .cant-listen.cant-talk.cant-say [data-tab=intercom], .no-login.cant-people.cant-users [data-tab=people],
+  .cant-people [data-tab=feelings], .cant-users [data-tab=log] { display: none !important; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 12px 12px calc(var(--nav) + env(safe-area-inset-bottom) + 16px); }
+  .tab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; }
+  .help { display: none; color: var(--dim); font-size: 12px; line-height: 1.5; background: var(--panel);
+    border-radius: 10px; padding: 8px 12px; }
+  .show-help .help { display: block; }
+
+  /* ---- buttons: round icon buttons with a small caption under them */
+  .tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 2px; }
+  .drives { display: contents; }
+  .ib { display: grid; justify-items: center; gap: 3px; width: 58px; padding: 0; border: 0; background: none;
+    color: var(--dim); font-size: 10.5px; }
+  .ib > i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+    background: var(--panel2); color: var(--text); font-size: 22px; transition: background .15s, color .15s; }
+  .ib:active > i { filter: brightness(1.3); }
+  .ib.on > i { background: var(--blue); color: #fff; }
+  .ib.warn > i { background: none; box-shadow: inset 0 0 0 2px var(--warn); color: var(--warn); }
+  .ib.warn { color: var(--warn); }
+  .ib.red > i { background: var(--stop); color: #fff; }
+  .sep { width: 1px; height: 36px; margin: 4px 6px 0; background: var(--line); }
+  .moodbox { position: relative; }
+  #mood { position: absolute; inset: 0; opacity: 0; width: 100%; }    /* the icon shows; the select takes the tap */
+
+  /* ---- video, with what she sees and does over it */
+  #video { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #000; border-radius: 12px; overflow: hidden;
+    display: grid; place-items: center; color: var(--dim); }
+  #video img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .over { position: absolute; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
+  .over.tl { top: 8px; left: 8px; right: 8px; } .over.bl { bottom: 8px; left: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px 3px 6px; border-radius: 12px;
+    background: #000a; color: #fff; font-size: 12px; }
+  .chip i { font-size: 16px; }
+  .chip:empty, .chip.empty { display: none; }
+  .over.br { bottom: 8px; right: 8px; }
+  #recchip { background: var(--stop); animation: blink 1s steps(2) infinite; }
+  #hudbtn { pointer-events: auto; margin-left: auto; border: 0; padding: 3px 6px; }
+  #hudbtn.on { color: #9fffb0; }
+
+  /* ---- the HUD: her last few log lines over the picture, like a sci-fi readout */
+  #hud { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 28px 10px 36px; list-style: none;
+    background: linear-gradient(#0000, #000b 45%);
+    pointer-events: none; font: 500 12px/1.4 ui-monospace, "Cascadia Mono", "DejaVu Sans Mono", Menlo, monospace;
+    color: #9fffb0; text-shadow: 0 0 6px #2f6, 0 1px 2px #000, 0 0 1px #000; text-transform: uppercase; }
+  #hud li { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: opacity .4s; }
+  #hud b { font-weight: 700; display: inline-block; width: 6ch; }
+  #hud time { opacity: .7; margin-right: 1ch; }
+  #hud li.new { animation: type 1.2s steps(48, end) both; }
+  #hud li:last-child::after { content: "\2588"; margin-left: 2px; animation: blink 1s steps(2) infinite; }
+  @keyframes type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+  .hud-on #video::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(transparent 0 2px, #0000001f 2px 3px); }
+  .cant-users #hud, .cant-users #hudbtn { display: none !important; }
+  @keyframes blink { 50% { filter: brightness(0.7); } }
+
+  /* ---- sticks and STOP */
+  #controls { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; }
+  .stick { display: grid; gap: 6px; justify-items: center; color: var(--dim); font-size: 12px; }
+  .pad { width: min(200px, 100%); aspect-ratio: 1; border-radius: 50%; background: var(--panel);
+    border: 2px solid var(--line); position: relative; touch-action: none; }
+  .pad::before, .pad::after { content: ""; position: absolute; background: var(--line); }
+  .pad::before { left: 50%; top: 10%; bottom: 10%; width: 1px; }
+  .pad::after { top: 50%; left: 10%; right: 10%; height: 1px; }
+  .knob { position: absolute; width: 34%; aspect-ratio: 1; border-radius: 50%; background: var(--accent);
+    left: 33%; top: 33%; box-shadow: 0 2px 8px #0008; z-index: 1; pointer-events: none; }
+  #campad .knob { background: var(--blue); }
+  #stop { width: 76px; height: 76px; border-radius: 50%; border: 0; background: var(--stop); color: #fff;
+    display: grid; place-items: center; align-content: center; gap: 0; font: 700 13px system-ui, sans-serif; letter-spacing: 1px;
+    box-shadow: 0 0 0 4px #c6282833; }
+  #stop i { font-size: 28px; }
+  #stop:active { filter: brightness(1.2); }
+  .speed { display: flex; align-items: center; gap: 4px; color: var(--dim); font-size: 12px; }
+  .speed i { font-size: 18px; }
+  input[type=range] { width: 100px; accent-color: var(--accent); }
+  .no-motors #drive, .no-motors #stop { opacity: .35; }
+  .table #drive { opacity: .35; pointer-events: none; }
+  .table #drive::after { content: "TABLE MODE"; top: 50%; left: 50%; right: auto; height: auto;
+    transform: translate(-50%, -50%); background: none; color: var(--warn); font: 700 13px system-ui, sans-serif;
+    white-space: nowrap; }
+  .table #drive .knob { display: none; }
+  .no-gimbal #cam-stick { opacity: .35; }
+  #rec-err { color: var(--warn); font-size: 12px; text-align: center; }
+  #rec-err:empty { display: none; }
+
+  /* ---- folding boxes (recordings, people, users...) */
+  details { background: var(--panel); border-radius: 12px; padding: 10px 12px; }
+  summary { cursor: pointer; color: var(--dim); list-style: none; display: flex; align-items: center; gap: 8px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "expand_more"; font: 20px/1 "Symbols"; margin-left: auto; transition: transform .15s; }
+  details[open] > summary::after { transform: rotate(180deg); }
+  summary i { font-size: 20px; }
+  #files { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: 14px; }
+  #files li { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  #files .meta { color: var(--dim); font-size: 12px; margin-right: auto; }
+  .mini { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 0;
+    background: var(--panel2); color: var(--text); text-decoration: none; padding: 0; }
+  .mini i { font-size: 18px; }
+  .mini.danger { color: var(--stop); }
+
+  /* ---- intercom */
+  #intercom { display: flex; gap: 10px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+  #intercom .ib { width: 72px; }
+  #intercom .ib > i { width: 56px; height: 56px; font-size: 26px; }
+  #listen.on > i { background: var(--blue); }
+  #talk { touch-action: none; }
+  #talk.on > i { background: var(--accent); color: #fff; }
+  #ic-msg { width: 100%; text-align: center; color: var(--dim); font-size: 12px; }
+  #ic-msg:empty { display: none; }
+  #ic-msg a { color: var(--accent); }
+
+  /* ---- text boxes with a send button */
+  .bar { display: flex; gap: 6px; align-items: center; }
+  .bar input[type=text], .bar input:not([type]) { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 22px;
+    border: 1px solid var(--line); background: var(--panel); font-size: 15px; -webkit-user-select: text; user-select: text; }
+  .send { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 0;
+    background: var(--accent); color: #fff; padding: 0; flex: none; }
+  .send.blue { background: var(--blue); }
+  .round { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 0; flex: none;
+    background: var(--panel2); color: var(--text); padding: 0; }
+  .round.hush { color: #ff6b6b; }
+  .toggle { position: relative; }
+  .toggle input { position: absolute; opacity: 0; pointer-events: none; }
+  .toggle .off-i { display: none; }
+  .toggle:has(input:not(:checked)) .on-i { display: none; }
+  .toggle:has(input:not(:checked)) .off-i { display: inline-block; }
+  .toggle:has(input:not(:checked)) { color: var(--dim); }
+
+  /* ---- chat */
+  #chat { display: grid; gap: 8px; }
+  #chatlog { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start;
+    height: calc(100dvh - var(--bar) - var(--nav) - 110px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: 200px; overflow-y: auto; font-size: 14px; -webkit-user-select: text; user-select: text; }
+  #chatlog li { max-width: 85%; padding: 8px 12px; border-radius: 16px 16px 16px 4px; background: var(--panel); }
+  #chatlog li.me { justify-self: end; background: #23384d; border-radius: 16px 16px 4px 16px; }
+  #chatlog li.err { color: var(--dim); font-style: italic; background: none; padding: 2px 12px; }
+  #chatlog li a { color: var(--accent); }
+  #chatlog li.ask button { font-size: 12px; padding: 4px 10px; border-radius: 12px; margin-top: 4px;
+    border: 1px solid var(--line); background: none; }
+
+  /* ---- log, feelings */
+  #log-filters { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+  #log-filters label { display: inline-flex; gap: 4px; align-items: center; color: var(--dim); font-size: 13px; }
+  #log-lines { list-style: none; margin: 0; padding: 0; font-size: .85em; }
+  #log-lines li { display: grid; grid-template-columns: 4.5em 5.5em minmax(0, 1fr); gap: 8px; padding: 3px 0;
+                  border-top: 1px solid var(--line); }
+  #log-lines time { color: var(--dim); }
+  #log-lines .k { color: var(--dim); }
+  #log-lines .k-problem { color: var(--stop); }
+  #log-lines .k-said, #log-lines .k-heard { color: var(--text); }
+  #log-lines span:last-child { white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; }
+  #feel-now { font-size: 1.1em; margin: 4px 0; }
+  #feel-now b { font-size: 1.6em; color: var(--text); margin-right: 6px; }
+  #feel-now span { color: var(--dim); }
+  .feel-chart { position: relative; margin: 8px 0 14px; }
+  .feel-chart h4 { margin: 0 0 2px; font-weight: normal; color: var(--dim); font-size: .9em; }
+  .feel-chart svg { display: block; width: 100%; }
+  .feel-chart .tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line);
+                     color: var(--text); font-size: .8em; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  #feel-small { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 16px; }
+  #feel-log { width: 100%; border-collapse: collapse; font-size: .85em; }
+  #feel-log td { padding: 3px 6px; border-top: 1px solid var(--line); color: var(--dim); vertical-align: top; }
+  #feel-log td:nth-child(2) { color: var(--text); }
+  .info { color: var(--dim); }
+  .pick { display: flex; gap: 6px; align-items: center; color: var(--dim); font-size: 13px; }
+  select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); font-size: 13px; }
+
+  /* ---- people, users, my account */
+  #people-list { display: grid; gap: 10px; margin-top: 8px; font-size: 14px; }
+  .person { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .person img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; background: #000; }
+  .person .info { flex: 1; min-width: 10em; font-size: 13px; }
+  .person .info b { color: var(--text); font-weight: 600; }
+  .person input { width: 9em; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--bg); font-size: 14px; -webkit-user-select: text; user-select: text; }
+  .person button { font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: none; }
+  #firstuser { background: var(--panel); border: 1px solid var(--warn); border-radius: 12px; padding: 10px 12px;
+    display: grid; gap: 8px; font-size: 14px; margin-bottom: 12px; }
+  .form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .form input, .form select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 14px; -webkit-user-select: text; user-select: text; }
+  .form button, #users-list button, #users-list select { font-size: 12px; padding: 6px 10px; border-radius: 8px;
+    border: 1px solid var(--line); background: none; }
+  #users-list { display: grid; gap: 6px; margin-top: 8px; font-size: 14px; }
+  #users-list .person b { min-width: 7em; }
+  .msg { color: var(--warn); font-size: 13px; }
+  #people h3 { margin: 12px 0 0; font: 600 13px system-ui, sans-serif; color: var(--dim); }
+
+  .cant-watch #video, .cant-drive #controls, .cant-drive .drives, .cant-record #rec, .cant-record #recordings,
+  .cant-listen #listen, .cant-talk #talk, .cant-say #sayform, .cant-chat #chat, .cant-people #people, .cant-say #chatform .toggle,
+  .cant-users #users, .no-login #account { display: none !important; }
+
+  /* Wide screens: the camera on the left, her controls beside it. */
+  @media (min-width: 820px) {
+    #tab-controls { grid-template-columns: minmax(0, 1fr) 360px; }
+    #tab-controls > #video { grid-row: 1 / span 6; }
+    #tab-controls .pad { width: 130px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Patti</h1>
+  <div id="status">
+    <i id="d-link" class="st" title="Link to her">link</i>
+    <i id="d-motors" class="st" title="Motors">toys</i>
+    <i id="d-cam" class="st" title="Camera">videocam</i>
+    <i id="d-gimbal" class="st" title="Gimbal">control_camera</i>
+    <i id="d-voice" class="st" title="Voice">mic</i>
+    <span id="heard"></span>
+    <span id="pico"></span>
+  </div>
+  <button class="hdr-btn" id="helpbtn" title="Show what everything does"><i>help</i></button>
+  <span id="me"></span>
+</header>
+
+<main id="app">
+  <div id="firstuser" hidden><b>Make your own login</b>
+    <span>She still uses one shared password. Make yourself a login (as an admin) and that password stops working:
+      then add everyone else under Users, and fill in your profile under My account.</span>
+    <form class="form" id="firstform"><input name="name" placeholder="Login name" maxlength="30" autocomplete="username">
+      <input name="password" type="password" placeholder="Password (6+)" autocomplete="new-password">
+      <input name="again" type="password" placeholder="Again" autocomplete="new-password">
+      <button>make my login</button><span class="msg"></span></form></div>
+
+  <section class="tab" id="tab-controls">
+  <div id="video"><img id="cam" alt="Camera" src="/video.mjpg">
+    <div class="over tl"><span class="chip empty" id="recchip"><i class="fill">radio_button_checked</i><span></span></span>
+      <span class="chip empty" id="placechip" title="Where she is, by the wifi she's on"><i>location_on</i><span id="place"></span></span>
+      <span class="chip empty" id="whochip" title="People she's recognised in the last few minutes"><i>visibility</i><span id="who"></span></span>
+      <button class="chip" id="hudbtn" title="Her log over the picture"><i>terminal</i></button></div>
+    <ol id="hud" hidden></ol>
+    <div class="over br"><span class="chip empty" id="aimchip"><i>control_camera</i><span id="aim"></span></span></div>
+  </div>
+  <div class="tools">
+    <span class="drives">
+      <button class="ib" id="centre" title="Centre the camera (C)"><i>filter_center_focus</i><span>centre</span></button>
+      <button class="ib" id="follow" title="Keep the camera on a face (F)"><i>person_search</i><span>follow</span></button>
+      <button class="ib" id="relax" title="Let the camera servos go limp"><i>self_improvement</i><span>relax</span></button>
+      <span class="ib moodbox" title="Eye mode" hidden><i>mood</i><span id="mood-val">eyes</span><select id="mood" hidden></select></span>
+      <button class="ib" id="eyes" title="Restart the eye panels (after a loose wire)"><i>visibility</i><span>reset eyes</span></button>
+      <button class="ib" id="ears" title="Her listening for commands (the mic icon on her chest)" hidden><i>hearing</i><span>ears on</span></button>
+    </span>
+    <button class="ib hush" title="Stop her talking"><i>voice_over_off</i><span>hush</span></button>
+    <span class="sep"></span>
+    <button class="ib" id="rec" title="Record (R); it keeps going if you close the page"><i>radio_button_checked</i><span>record</span></button>
+    <button class="ib" id="table" title="No driving at all, until switched off. Remembered across restarts."><i>table_restaurant</i><span>table</span></button>
+  </div>
+  <div id="rec-err"></div>
+  <div id="controls">
+    <div class="stick" id="drive-stick"><div class="pad" id="drive"><div class="knob"></div></div>
+      <label class="speed" title="Top speed"><i>speed</i><input id="speed" type="range" min="0.1" max="1" step="0.1" value="0.4"><span id="speed-val">0.4</span></label></div>
+    <button id="stop" title="Stop everything (Space)"><i class="fill">front_hand</i>STOP</button>
+    <div class="stick" id="cam-stick"><div class="pad" id="campad"><div class="knob"></div></div>camera</div>
+  </div>
+  <details id="recordings"><summary><i>video_library</i>Recordings <span id="free"></span></summary><ul id="files"></ul></details>
+  <div class="help">Drive: left pad, or hold WASD / arrows; let go to stop. The slider under it is her top speed.
+    Camera: right pad, or hold IJKL; C centres. It stays where you leave it.
+    STOP (or Space) stops everything, follow too.<br>
+    centre points the camera ahead; follow (or F) keeps it on a face until you take over; relax lets its servos go limp.
+    The face sets her eyes' mood (or makes her drowsy or asleep); reset eyes restarts the panels after a loose wire.
+    ears turns her listening for commands on and off, like the mic icon on her chest; hush stops her mid-sentence.<br>
+    record (or R) keeps going if you close the page. table stops all driving until you switch it off (it survives restarts).<br>
+    Up top: link, motors, camera, gimbal and voice go green when they're working; tap ? to hide this.</div>
+  </section>
+
+  <section class="tab" id="tab-chat" hidden>
+  <div id="chat"><ul id="chatlog"></ul>
+    <form id="chatform" class="bar"><input id="chattext" maxlength="200" placeholder="Talk to her: what's the time?" autocomplete="off">
+      <label class="round toggle" title="Answer out loud as well as here"><input type="checkbox" id="chataloud" checked><i class="on-i">volume_up</i><i class="off-i">volume_off</i></label>
+      <button type="button" class="round hush" title="Stop her talking"><i>voice_over_off</i></button>
+      <button class="send blue" title="Send"><i>send</i></button></form></div>
+  <div class="help">Anything you could say to her works typed (no "Patti" needed). She answers here,
+    and out loud too unless the speaker's crossed out. The crossed-out face stops her talking.</div>
+  </section>
+
+  <section class="tab" id="tab-intercom" hidden>
+  <div id="intercom">
+    <button class="ib" id="listen" title="Hear her mic (H)"><i>headphones</i><span>listen</span></button>
+    <button class="ib" id="talk" title="Hold to talk through her speaker (hold T)"><i>mic</i><span>hold to talk</span></button>
+    <button class="ib hush" title="Stop her talking"><i>voice_over_off</i><span>hush</span></button>
+    <span id="ic-msg"></span></div>
+  <form id="sayform" class="bar"><input id="saytext" maxlength="500" placeholder="Type something for her to say" autocomplete="off">
+    <button class="send" title="Say it"><i>send</i></button></form>
+  <div class="help">listen (or H) plays her mic here; hold to talk (or hold T) plays your voice on her speaker.
+    Her Sense HAT shows an ear while anyone listens, a speaker while anyone talks.
+    Type in the box and press Enter (or the arrow) and she says it in her own voice.
+    hush stops her mid-sentence; so does a tap on her chest, or "stop" or "shush" while she talks.</div>
+  </section>
+
+  <section class="tab" id="tab-log" hidden>
+    <div id="log-filters">
+      <select id="log-range"><option value="1">last hour</option><option value="6">last 6 hours</option>
+        <option value="24">last day</option></select>
+      <span id="log-kinds"></span>
+      <label><input type="checkbox" id="log-live" checked> live</label>
+    </div>
+    <ul id="log-lines"></ul>
+  </section>
+  <section class="tab" id="tab-feelings" hidden>
+    <div id="feel-now"></div>
+    <label class="pick">Show <select id="feel-range"><option value="24">the last day</option><option value="168">the last week</option></select></label>
+    <div class="feel-chart" id="feel-happy"></div>
+    <div id="feel-small"></div>
+    <p id="feel-bonds" class="info"></p>
+    <details><summary>What moved her</summary><table id="feel-log"></table></details>
+  </section>
+  <section class="tab" id="tab-people" hidden>
+  <details id="people"><summary><i>face</i>People</summary><div id="people-list"></div></details>
+  <details id="users"><summary><i>group</i>Users</summary><div id="users-list"></div>
+    <form class="form" id="adduser"><input name="name" placeholder="Login" maxlength="30" autocomplete="off">
+      <input name="first" placeholder="First name" maxlength="100"><input name="last" placeholder="Last name" maxlength="100">
+      <input name="nicknames" placeholder="Nicknames (Jo, Jojo)" maxlength="100">
+      <input name="email" type="email" placeholder="Email" maxlength="100"><input name="location" placeholder="Location" maxlength="100">
+      <select name="person" title="Who she knows them as (by face and voice)"></select>
+      <select name="role"></select>
+      <input name="password" type="password" placeholder="Password (6+)" autocomplete="new-password">
+      <button>add</button><span class="msg"></span></form></details>
+  <details id="account"><summary><i>account_circle</i>My account</summary>
+    <form class="form" id="meform"><span id="melogin" class="info"></span>
+      <input name="first" placeholder="First name" maxlength="100"><input name="last" placeholder="Last name" maxlength="100">
+      <input name="nicknames" placeholder="Nicknames (Robert, Bob)" maxlength="100">
+      <input name="email" type="email" placeholder="Email" maxlength="100"><input name="location" placeholder="Location" maxlength="100">
+      <button>save</button><span class="msg"></span></form>
+    <form class="form" id="pwform"><input name="old" type="password" placeholder="Current" autocomplete="current-password">
+      <input name="new" type="password" placeholder="New (6+)" autocomplete="new-password">
+      <input name="again" type="password" placeholder="Again" autocomplete="new-password">
+      <button>change</button><span class="msg"></span></form></details>
+  <div class="help">People: who she's seen. Give someone new a name and she'll know them next time.
+    Users (admins): who can log in, what they can do, and who she knows each login as.</div>
+  </section>
+</main>
+
+<nav id="tabs"><button data-tab="controls"><i>gamepad</i>Controls</button><button data-tab="chat"><i>forum</i>Chat</button>
+  <button data-tab="intercom"><i>headset_mic</i>Intercom</button><button data-tab="people"><i>group</i>People</button>
+  <button data-tab="feelings"><i>favorite</i>Feelings</button><button data-tab="log"><i>receipt_long</i>Log</button></nav>
+
+<script>
+(() => {
+  const SEND_MS = 100;
+  const $ = id => document.getElementById(id);
+  const speedEl = $("speed");
+
+  // ---- connection
+  let ws = null, retry = 500;
+  function connect() {
+    ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws");
+    ws.onopen = () => { retry = 500; dot("d-link", "ok"); };
+    ws.onclose = () => {
+      dot("d-link", "bad");
+      // Logged out (cookie gone or password changed)? Then go log in again.
+      fetch("/", { redirect: "manual" }).then(r => {
+        if (r.type === "opaqueredirect") location.href = "/login";
+      }).catch(() => {});
+      setTimeout(connect, retry); retry = Math.min(retry * 2, 8000);
+    };
+    ws.onmessage = ev => {
+      const s = JSON.parse(ev.data);
+      dot("d-motors", s.motors ? "ok" : "bad");
+      dot("d-cam", s.camera === "ok" ? "ok" : "warn");
+      dot("d-gimbal", s.gimbal ? "ok" : "bad");
+      chip("aim", s.gimbal ? s.pan + "\u00b0 / " + s.tilt + "\u00b0" : "");
+      document.body.classList.toggle("no-gimbal", !s.gimbal);
+      showRec(s.rec);
+      $("pico").textContent = s.camera !== "ok" ? s.camera : (s.pico === "DEADMAN" ? "" : s.pico);
+      document.body.classList.toggle("no-motors", !s.motors);
+      showTable(s.table);
+      followOn = !!s.follow; $("follow").classList.toggle("on", followOn);
+      showMood(s);
+      const v = s.voice;
+      $("d-voice").hidden = $("heard").hidden = !v;
+      if (v) {
+        dot("d-voice", !v.ok ? "bad" : v.muted ? "warn" : "ok");
+        $("d-voice").textContent = v.muted ? "mic_off" : "mic";
+        $("d-voice").title = "Voice: " + (v.error || (v.muted ? "not listening" : "listening"));
+        $("heard").textContent = v.heard ? "\u201c" + v.heard + "\u201d" : "";
+      }
+      showEars(v);
+      showMe(s);
+      httpsURL = s.https;
+      const pl = s.place;
+      chip("place", !pl || !pl.ssid ? "" : pl.place ? pl.place : "on " + pl.ssid);
+      chip("who", (s.who && s.who.length ? s.who.join(", ") : "") +
+        (s.talking ? (s.who && s.who.length ? "; " : "") + "talking with " + s.talking : ""));
+    };
+  }
+  // ---- ears: her listening for commands, on or off (kept, as the chest's mic icon)
+  const earsBtn = $("ears");
+  function showEars(v) {
+    earsBtn.hidden = !v; earsBtn.disabled = false;
+    if (!v) return;
+    earsBtn.classList.toggle("off", !!v.muted); earsBtn.classList.toggle("warn", !!v.muted);
+    setBtn(earsBtn, v.muted ? "hearing_disabled" : "hearing", v.muted ? "ears off" : "ears on");
+  }
+  earsBtn.addEventListener("click", () => {
+    send({ t: "ears", on: earsBtn.classList.contains("off") }); earsBtn.disabled = true;
+  });
+  function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+  function dot(id, cls) { $(id).dataset.s = cls; }
+  // A chip over the video: hidden while it has nothing to say.
+  function chip(id, text) { $(id).textContent = text; $(id).parentNode.classList.toggle("empty", !text); }
+  // An icon button: its icon and its caption.
+  function setBtn(b, icon, label) { b.querySelector("i").textContent = icon; b.querySelector("span").textContent = label; }
+
+  // ---- input state. Drive: x = turn (-1 left .. 1 right), y = forward (-1 .. 1).
+  // Camera: x = pan rate (+ right), y = tilt rate (+ up).
+  const keys = new Set();
+
+  function fromKeys(up, down, left, right) {
+    return { x: (keys.has(right) ? 1 : 0) - (keys.has(left) ? 1 : 0),
+             y: (keys.has(up) ? 1 : 0) - (keys.has(down) ? 1 : 0) };
+  }
+
+  function target() {
+    if (tableOn) return { l: 0, r: 0, active: false };
+    let { x, y } = drive.on ? drive : fromKeys("up", "down", "left", "right");
+    let l = y + x, r = y - x;
+    const m = Math.max(1, Math.abs(l), Math.abs(r));
+    const s = parseFloat(speedEl.value);
+    return { l: l / m * s, r: r / m * s, active: !!(x || y) };
+  }
+
+  function look() {
+    let { x, y } = aimer.on ? aimer : fromKeys("cup", "cdown", "cleft", "cright");
+    // Squared, so small pushes give fine aiming and a full push swings fast.
+    return { x: x * Math.abs(x), y: y * Math.abs(y), active: !!(x || y) };
+  }
+
+  let wasActive = false, wasLooking = false;
+  setInterval(() => {
+    const t = target();
+    if (t.active) send({ t: "drive", l: +t.l.toFixed(2), r: +t.r.toFixed(2) });
+    else if (wasActive) send({ t: "stop" });
+    wasActive = t.active;
+    const c = look();
+    if (c.active || wasLooking) send({ t: "look", x: +c.x.toFixed(2), y: +c.y.toFixed(2) });
+    wasLooking = c.active;
+  }, SEND_MS);
+
+  function stopAll() {
+    drive.release(); aimer.release(); keys.clear();
+    send({ t: "stop" }); send({ t: "look", x: 0, y: 0 }); wasActive = wasLooking = false;
+  }
+
+  // ---- joysticks: drag from the middle; let go and it springs back
+  function joystick(pad) {
+    const knob = pad.querySelector(".knob");
+    const s = { x: 0, y: 0, on: false };
+    function place(x, y) {
+      knob.style.left = (33 + x * 33) + "%";
+      knob.style.top = (33 - y * 33) + "%";
+    }
+    function fromPointer(ev) {
+      const r = pad.getBoundingClientRect();
+      let x = (ev.clientX - r.left) / r.width * 2 - 1;
+      let y = -((ev.clientY - r.top) / r.height * 2 - 1);
+      const d = Math.hypot(x, y);
+      if (d > 1) { x /= d; y /= d; }
+      if (Math.hypot(x, y) < 0.12) { x = 0; y = 0; }   // dead zone in the middle
+      Object.assign(s, { x, y, on: true }); place(x, y);
+    }
+    s.release = () => { Object.assign(s, { x: 0, y: 0, on: false }); place(0, 0); };
+    pad.addEventListener("pointerdown", ev => { pad.setPointerCapture(ev.pointerId); fromPointer(ev); });
+    pad.addEventListener("pointermove", ev => { if (s.on) fromPointer(ev); });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(n => pad.addEventListener(n, s.release));
+    return s;
+  }
+  const drive = joystick($("drive")), aimer = joystick($("campad"));
+
+  // ---- keyboard (hold to move)
+  const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down",
+                   ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right",
+                   KeyI: "cup", KeyK: "cdown", KeyJ: "cleft", KeyL: "cright" };
+  addEventListener("keydown", ev => {
+    if (ev.code === "Space") { stopEverything(); ev.preventDefault(); return; }
+    if (ev.code === "KeyC") { send({ t: "centre" }); return; }
+    const k = KEYMAP[ev.code]; if (k) { keys.add(k); ev.preventDefault(); }
+  });
+  addEventListener("keyup", ev => { const k = KEYMAP[ev.code]; if (k) keys.delete(k); });
+
+  // ---- stop whenever attention goes elsewhere
+  addEventListener("blur", stopAll);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) stopAll(); });
+  // The STOP button (and Space) also ends follow; losing focus doesn't.
+  function stopEverything() { stopAll(); send({ t: "follow", on: false }); }
+  $("stop").addEventListener("click", stopEverything);
+  $("centre").addEventListener("click", () => send({ t: "centre" }));
+  $("relax").addEventListener("click", () => send({ t: "relax" }));
+  $("eyes").addEventListener("click", () => send({ t: "eyes" }));
+  // Eye mode: an expression, or drowsy/asleep (which a page action, a voice
+  // command or a loud sound will wake her from).
+  const moodEl = $("mood"), SLEEPY = ["drowsy", "asleep"];
+  function showMood(s) {
+    moodEl.parentNode.hidden = !s.moods; moodEl.hidden = false;
+    if (!s.moods) return;
+    if (moodEl.options.length !== s.moods.length + SLEEPY.length)
+      moodEl.replaceChildren(...s.moods.concat(SLEEPY).map(m => new Option(m, m)));
+    if (document.activeElement !== moodEl)
+      moodEl.value = SLEEPY.includes(s.eyes) ? s.eyes : s.mood;
+    $("mood-val").textContent = moodEl.value || "eyes";
+  }
+  moodEl.addEventListener("change", () => {
+    const m = moodEl.value;
+    send(SLEEPY.includes(m) ? { t: "doze", state: m } : { t: "mood", mood: m });
+    moodEl.blur();
+  });
+  // follow: the camera keeps a face in the middle until you stop it, move
+  // the camera yourself, centre or relax.
+  let followOn = false;
+  function toggleFollow() {
+    followOn = !followOn; $("follow").classList.toggle("on", followOn);
+    send({ t: "follow", on: followOn });
+  }
+  $("follow").addEventListener("click", toggleFollow);
+  addEventListener("keydown", ev => { if (ev.code === "KeyF" && !ev.repeat) toggleFollow(); });
+
+  // ---- table mode: the server refuses to drive while it's on, and
+  // remembers it across restarts; the page just shows it and greys the pad.
+  let tableOn = false;
+  const tableBtn = $("table");
+  function showTable(on) {
+    tableOn = !!on; tableBtn.disabled = false;
+    document.body.classList.toggle("table", tableOn);
+    tableBtn.classList.toggle("warn", tableOn);
+    setBtn(tableBtn, "table_restaurant", tableOn ? "table on" : "table");
+    if (tableOn) { drive.release(); ["up", "down", "left", "right"].forEach(k => keys.delete(k)); }
+  }
+  tableBtn.addEventListener("click", () => {
+    if (tableOn && !confirm("Turn off table mode? She'll be able to drive again.")) return;
+    send({ t: "table", on: !tableOn }); tableBtn.disabled = true;
+  });
+
+  // ---- recording: the server records (to its own disk), so it carries on
+  // if this page closes. Status comes back with the once-a-second update.
+  let recOn = false;
+  const recBtn = $("rec");
+  function toggleRec() { send({ t: "record", on: !recOn }); recBtn.disabled = true; }
+  recBtn.addEventListener("click", toggleRec);
+  addEventListener("keydown", ev => { if (ev.code === "KeyR" && !ev.repeat) toggleRec(); });
+  function showRec(r) {
+    if (!r) return;
+    const was = recOn;
+    recOn = r.on; recBtn.disabled = false;
+    recBtn.classList.toggle("red", r.on);
+    const t = Math.floor(r.secs / 60) + ":" + String(r.secs % 60).padStart(2, "0");
+    setBtn(recBtn, r.on ? "stop" : "radio_button_checked", r.on ? t : "record");
+    $("recchip").querySelector("span").textContent = r.on ? "REC " + t : "";
+    $("recchip").classList.toggle("empty", !r.on);
+    $("rec-err").textContent = r.error || "";
+    if (was !== r.on && $("recordings").open) loadFiles();
+  }
+
+  const mb = n => n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : Math.round(n / 1e6) + " MB";
+  function loadFiles() {
+    fetch("/recordings.json").then(r => r.json()).then(d => {
+      $("free").textContent = "(" + mb(d.free) + " free)";
+      const ul = $("files"); ul.textContent = "";
+      if (!d.files.length) { ul.innerHTML = "<li class=meta>None yet.</li>"; return; }
+      for (const f of d.files) {
+        const li = document.createElement("li");
+        // No ".mp4" on the end: Android video apps grab such links.
+        const url = "/rec/" + f.name.replace(/\.mp4$/, "") + "?k=" + f.key;
+        const name = document.createElement("span");
+        name.textContent = f.name.replace(/^rp-|\.mp4$/g, "");
+        const meta = document.createElement("span");
+        meta.className = "meta";
+        meta.textContent = mb(f.bytes) + (f.name === d.current ? " (recording)" : "");
+        li.append(name, meta);
+        if (f.name !== d.current) {
+          const play = el("a", { href: url + "&play=1", target: "_blank", className: "mini", title: "Play" }, el("i", { textContent: "play_arrow" }));
+          const dl = el("a", { href: url, download: f.name, className: "mini", title: "Download" }, el("i", { textContent: "download" }));
+          li.append(play, dl);
+        }
+        if (f.name !== d.current) {
+          const del = el("button", { className: "mini danger", title: "Delete" }, el("i", { textContent: "delete" }));
+          del.onclick = () => {
+            if (confirm("Delete " + f.name + "?"))
+              fetch("/recordings/" + f.name, { method: "DELETE" }).then(loadFiles);
+          };
+          li.append(del);
+        }
+        $("files").append(li);
+      }
+    }).catch(() => {});
+  }
+  $("recordings").addEventListener("toggle", () => { if ($("recordings").open) loadFiles(); });
+
+  speedEl.addEventListener("input", () => { $("speed-val").textContent = speedEl.value; });
+
+  // ---- intercom: her mic here (listen), and this mic on her speaker (hold to
+  // talk). Both are 16-bit mono PCM at RATE over a websocket (intercom.py).
+  // Half duplex, like a walkie-talkie: what she hears is muted here while you
+  // talk, or you'd hear yourself back through her.
+  const RATE = 16000;
+  let actx = null, httpsURL = null;
+  const wsURL = path => (location.protocol === "https:" ? "wss://" : "ws://") + location.host + path;
+  function audio() {        // (made on a click or press: browsers only allow sound after one)
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+    return actx;
+  }
+
+  let lws = null, playAt = 0, hear = null;
+  const listenBtn = $("listen");
+  function startListening() {
+    const ctx = audio();
+    if (!hear) { hear = ctx.createGain(); hear.connect(ctx.destination); }
+    lws = new WebSocket(wsURL("/listen"));
+    lws.binaryType = "arraybuffer";
+    lws.onmessage = ev => {
+      const s = new Int16Array(ev.data), buf = ctx.createBuffer(1, s.length, RATE), ch = buf.getChannelData(0);
+      for (let i = 0; i < s.length; i++) ch[i] = s[i] / 32768;
+      const now = ctx.currentTime;
+      // A little buffer against a jittery link; start again after a stall
+      // rather than falling further and further behind.
+      if (playAt < now + 0.03 || playAt > now + 0.6) playAt = now + 0.15;
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(hear); src.start(playAt);
+      playAt += buf.duration;
+    };
+    lws.onclose = () => { if (lws) stopListening(); };
+    listenBtn.classList.add("on"); setBtn(listenBtn, "headphones", "listening");
+  }
+  function stopListening() {
+    const w = lws; lws = null;
+    if (w) w.close();
+    listenBtn.classList.remove("on"); setBtn(listenBtn, "headphones", "listen");
+  }
+  listenBtn.addEventListener("click", () => lws ? stopListening() : startListening());
+
+  let tws = null, mic = null, talking = false;
+  const talkBtn = $("talk");
+  function needHttps() {
+    const m = $("ic-msg");
+    m.textContent = "Talking needs her https address" + (httpsURL ? ": " : " (tailscale serve).");
+    if (httpsURL) {
+      const a = document.createElement("a");
+      a.href = httpsURL; a.textContent = httpsURL.replace(/^https:\/\/|\/$/g, "");
+      m.append(a);
+    }
+  }
+  async function readyToTalk() {
+    if (!window.isSecureContext || !navigator.mediaDevices) { needHttps(); return false; }
+    const ctx = audio();
+    if (!mic) {
+      try {
+        mic = await navigator.mediaDevices.getUserMedia(
+          { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      } catch (e) { $("ic-msg").textContent = "No mic: " + e.message; return false; }
+      // Down to RATE by averaging, carrying the remainder between blocks.
+      const step = ctx.sampleRate / RATE;
+      let acc = 0, n = 0, t = 0;
+      const proc = ctx.createScriptProcessor(2048, 1, 1);
+      proc.onaudioprocess = ev => {
+        if (!talking || !tws || tws.readyState !== 1) return;
+        const x = ev.inputBuffer.getChannelData(0), out = [];
+        for (let i = 0; i < x.length; i++) {
+          acc += x[i]; n++; t++;
+          if (t >= step) {
+            t -= step;
+            out.push(Math.max(-1, Math.min(1, acc / n)) * 32767);
+            acc = 0; n = 0;
+          }
+        }
+        tws.send(Int16Array.from(out).buffer);
+      };
+      ctx.createMediaStreamSource(mic).connect(proc);
+      proc.connect(ctx.destination);      // (it only runs connected; it outputs silence)
+    }
+    if (!tws || tws.readyState > 1) {
+      tws = new WebSocket(wsURL("/talk"));
+      tws.binaryType = "arraybuffer";
+    }
+    if (tws.readyState === 0)
+      await new Promise(ok => { tws.addEventListener("open", ok, { once: true });
+                                tws.addEventListener("close", ok, { once: true }); });
+    return tws.readyState === 1;
+  }
+  let pressed = false;
+  async function talkDown() {
+    if (pressed) return;
+    pressed = true;
+    if (!(await readyToTalk()) || !pressed) { pressed = false; return; }
+    $("ic-msg").textContent = "";
+    talking = true;
+    tws.send(JSON.stringify({ t: "down" }));
+    if (hear) hear.gain.value = 0;
+    talkBtn.classList.add("on"); setBtn(talkBtn, "mic", "talking\u2026");
+  }
+  function talkUp() {
+    pressed = false;
+    if (!talking) return;
+    talking = false;
+    if (tws && tws.readyState === 1) tws.send(JSON.stringify({ t: "up" }));
+    // Back to hearing her once your last words have played on her speaker.
+    setTimeout(() => { if (!talking && hear) hear.gain.value = 1; }, 800);
+    talkBtn.classList.remove("on"); setBtn(talkBtn, "mic", "hold to talk");
+  }
+  talkBtn.addEventListener("pointerdown", ev => { ev.preventDefault(); talkBtn.setPointerCapture(ev.pointerId); talkDown(); });
+  for (const e of ["pointerup", "pointercancel", "lostpointercapture"]) talkBtn.addEventListener(e, talkUp);
+  talkBtn.addEventListener("contextmenu", ev => ev.preventDefault());   // (a long press on a phone)
+  addEventListener("keydown", ev => {
+    if (ev.repeat) return;
+    if (ev.code === "KeyT") talkDown();
+    if (ev.code === "KeyH") lws ? stopListening() : startListening();
+  });
+  addEventListener("keyup", ev => { if (ev.code === "KeyT") talkUp(); });
+  addEventListener("blur", talkUp);
+
+  // ---- say: she speaks what's typed (POST /say, as `say` on the Pi does).
+  // Keys typed here stay here: WASD and the rest would otherwise drive her.
+  const sayText = $("saytext"), sayBtn = $("sayform").querySelector("button.send");
+  for (const e of ["keydown", "keyup"]) sayText.addEventListener(e, ev => ev.stopPropagation());
+  $("sayform").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const text = sayText.value.trim();
+    if (!text) return;
+    sayBtn.disabled = true;
+    fetch("/say", { method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text }) })
+      .then(r => r.json()).then(d => {
+        if (d.error) $("ic-msg").textContent = d.error;
+        else { sayText.value = ""; $("ic-msg").textContent = ""; }
+      })
+      .catch(() => { $("ic-msg").textContent = "Couldn't reach her."; })
+      .finally(() => { sayBtn.disabled = false; sayText.focus(); });
+  });
+
+  // ---- chat: typed commands, as if said to her (POST /ask); her answers come back here.
+  const chatText = $("chattext"), chatAloud = $("chataloud"), chatLog = $("chatlog");
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } };
+  for (const e of ["keydown", "keyup"]) chatText.addEventListener(e, ev => ev.stopPropagation());
+  chatAloud.checked = store("chatAloud") !== "0";
+  chatAloud.addEventListener("change", () => store("chatAloud", chatAloud.checked ? "1" : "0"));
+  function chatLine(text, cls) {
+    const li = document.createElement("li");
+    li.textContent = text; if (cls) li.className = cls;
+    chatLog.append(li); chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  // Not one of hers: offer to ask Claude (POST /claude), and show the answer.
+  function ask2(prompt, yesText, onYes, onNo) {
+    const yes = el("button", { textContent: yesText }), no = el("button", { textContent: "no" });
+    const li = el("li", { className: "ask" }, prompt + " ", yes, " ", no);
+    chatLog.append(li); chatLog.scrollTop = chatLog.scrollHeight;
+    yes.onclick = () => onYes(li);
+    no.onclick = () => onNo(li);
+  }
+  // Like something she's been told before: the same question? Yes: that answer (POST /recall).
+  function askSame(text, similar, canAsk) {
+    ask2("You asked me something like that before: \u201c" + similar.question + "\u201d. Is it the same question?", "yes",
+      li => {
+        li.remove();
+        fetch("/recall", { method: "POST", headers: { "Content-Type": "application/json" },
+                           body: JSON.stringify({ id: similar.id, quiet: !chatAloud.checked }) })
+          .then(r => r.json()).then(d => {
+            d.said.forEach(l => chatLine(l));
+            chatLine("(from memory: I asked about that " + d.remembered + ".)", "err");
+            if (d.again) askClaude(text, "Want me to ask Claude again?");
+          }).catch(() => chatLine("Couldn't reach her.", "err"));
+      },
+      li => { li.remove(); if (canAsk) askClaude(text); else chatLine("I don't know how to answer that.", "err"); });
+  }
+  function askClaude(text, prompt) {
+    const yes = el("button", { textContent: "yes, ask Claude" }), no = el("button", { textContent: "no" });
+    const li = el("li", { className: "ask" }, (prompt || "I don't know how to answer that. Should I ask Claude?") + " ", yes, " ", no);
+    chatLog.append(li); chatLog.scrollTop = chatLog.scrollHeight;
+    no.onclick = () => { li.replaceChildren(prompt ? "Okay." : "I don't know how to answer that."); };
+    yes.onclick = () => {
+      li.replaceChildren("Asking Claude\u2026");
+      fetch("/claude", { method: "POST", headers: { "Content-Type": "application/json" },
+                         body: JSON.stringify({ text, quiet: !chatAloud.checked }) })
+        .then(r => r.json()).then(d => {
+          li.remove();
+          if (d.error) chatLine(d.error, "err");
+          else { d.said.forEach(l => chatLine(l)); chatLine("(from Claude; I'll remember that)", "err"); }
+        })
+        .catch(() => { li.remove(); chatLine("Couldn't reach her.", "err"); });
+    };
+  }
+  $("chatform").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const text = chatText.value.trim();
+    if (!text) return;
+    chatLine(text, "me"); chatText.value = "";
+    fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text, quiet: !chatAloud.checked }) })
+      .then(r => r.json()).then(d => {
+        if (d.similar) askSame(text, d.similar, d.claude);
+        else if (d.error && d.claude) askClaude(text);
+        else if (d.error && d.error.startsWith("You can't")) chatLine(d.error, "err");
+        else if (d.error) chatLine("I don't know that one." + (d.near && d.near.length ? " Did you mean: " + d.near.join("; ") + "?" : ""), "err");
+        else if (d.said.length) {
+          d.said.forEach(l => chatLine(l.replace(/\[[^\]]*\]\s*/g, "")));
+          if (d.remembered) chatLine("(from memory: I asked about that " + d.remembered + ".)", "err");
+          if (d.thought) chatLine("(worked out from what I've been told)", "err");
+          if (d.wiki) {
+            const li = el("li", { className: "err" }, "(from Wikipedia: ",
+              el("a", { href: d.wiki.url, target: "_blank", rel: "noopener", textContent: d.wiki.title }), ")");
+            chatLog.append(li); chatLog.scrollTop = chatLog.scrollHeight;
+            if (d.claude) askClaude(text, "Want Claude's answer instead?");
+          }
+          if (d.again) askClaude(text, "Want me to ask Claude again?");
+        }
+        else chatLine("(done: " + d.action + ")", "err");
+      })
+      .catch(() => chatLine("Couldn't reach her.", "err"));
+  });
+
+  // ---- hush: stop her talking (POST /hush; a tap on her chest, or "stop", does it too)
+  for (const b of document.querySelectorAll("button.hush"))
+    b.addEventListener("click", () => fetch("/hush", { method: "POST" }).catch(() => {}));
+
+  // ---- feelings (limbic.py, GET /limbic.json): how she is, her happiness
+  // over time (0.5 is content), each hormone on its own small chart (all 0..1),
+  // and what moved her. One line per chart: the title says which.
+  const HORMONES = ["oxytocin", "dopamine", "serotonin", "cortisol", "adrenaline", "melatonin"];
+  const ABOUT = { oxytocin: "company", dopamine: "curiosity", serotonin: "contentment", cortisol: "stress",
+                  adrenaline: "startle", melatonin: "sleepiness" };
+  const WHY = { oxytocin: "mostly company", dopamine: "mostly learning things", cortisol: "a bit on edge",
+                oxytocin_low: "a bit lonely", dopamine_low: "a quiet day" };
+  const NS = "http://www.w3.org/2000/svg";
+  const svgEl = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+  const hhmm = t => new Date(t * 1000).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
+  function lineChart(box, rows, key, title, height, ref) {
+    box.replaceChildren(el("h4", { textContent: title }));
+    const w = Math.max(200, box.clientWidth || 300), h = height, pad = { l: 26, r: 6, t: 6, b: 16 };
+    const svg = svgEl("svg", { viewBox: `0 0 ${w} ${h}`, height: h });
+    if (rows.length < 2) { box.append(el("p", { className: "info", textContent: "Not enough readings yet." })); return; }
+    const t0 = rows[0].at, t1 = rows[rows.length - 1].at;
+    const x = t => pad.l + (t - t0) / (t1 - t0 || 1) * (w - pad.l - pad.r), y = v => pad.t + (1 - v) * (h - pad.t - pad.b);
+    for (const v of [0, 0.5, 1]) {
+      svg.append(svgEl("line", { x1: pad.l, x2: w - pad.r, y1: y(v), y2: y(v), stroke: "var(--line)", "stroke-width": 1,
+                                 "stroke-dasharray": v === ref ? "4 3" : "" }));
+      const lab = svgEl("text", { x: pad.l - 4, y: y(v) + 4, "text-anchor": "end", fill: "var(--dim)", "font-size": 10 });
+      lab.textContent = v; svg.append(lab);
+    }
+    for (const [t, anchor] of [[t0, "start"], [t1, "end"]]) {
+      const lab = svgEl("text", { x: x(t), y: h - 3, "text-anchor": anchor, fill: "var(--dim)", "font-size": 10 });
+      lab.textContent = hhmm(t); svg.append(lab);
+    }
+    svg.append(svgEl("path", { d: rows.map((r, i) => (i ? "L" : "M") + x(r.at).toFixed(1) + " " + y(r[key] ?? 0).toFixed(1)).join(""),
+                               fill: "none", stroke: "var(--accent)", "stroke-width": 2, "stroke-linejoin": "round" }));
+    const cross = svgEl("line", { y1: pad.t, y2: h - pad.b, stroke: "var(--dim)", "stroke-width": 1, visibility: "hidden" });
+    const dot = svgEl("circle", { r: 4, fill: "var(--accent)", stroke: "var(--panel)", "stroke-width": 2, visibility: "hidden" });
+    svg.append(cross, dot);
+    const tip = el("div", { className: "tip", hidden: true });
+    svg.addEventListener("pointermove", ev => {
+      const px = (ev.clientX - svg.getBoundingClientRect().left) * w / svg.getBoundingClientRect().width;
+      const t = t0 + (px - pad.l) / (w - pad.l - pad.r) * (t1 - t0);
+      const r = rows.reduce((a, b) => Math.abs(b.at - t) < Math.abs(a.at - t) ? b : a);
+      cross.setAttribute("x1", x(r.at)); cross.setAttribute("x2", x(r.at)); cross.setAttribute("visibility", "visible");
+      dot.setAttribute("cx", x(r.at)); dot.setAttribute("cy", y(r[key] ?? 0)); dot.setAttribute("visibility", "visible");
+      tip.hidden = false; tip.textContent = hhmm(r.at) + ": " + (r[key] ?? 0).toFixed(2);
+      const sx = x(r.at) / w * svg.getBoundingClientRect().width;
+      tip.style.left = Math.min(sx + 8, svg.getBoundingClientRect().width - 110) + "px"; tip.style.top = "18px";
+    });
+    svg.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); });
+    box.append(svg, tip);
+  }
+  function loadFeelings() {
+    fetch("/limbic.json?h=" + $("feel-range").value).then(r => r.json()).then(d => {
+      const n = d.now, [how, why] = n.how;
+      $("feel-now").replaceChildren(el("b", { textContent: n.happy.toFixed(2) }), "feeling " + how,
+                                    el("span", { textContent: (why ? ", " + WHY[why] : "") + " (0.5 is content)" }));
+      lineChart($("feel-happy"), d.readings, "happy", "Happiness", 160, 0.5);
+      const small = $("feel-small"); small.replaceChildren();
+      for (const k of HORMONES) {
+        const box = el("div", { className: "feel-chart" }); small.append(box);
+        lineChart(box, d.readings, k, k[0].toUpperCase() + k.slice(1) + " (" + ABOUT[k] + "), now " + n.levels[k].toFixed(2), 80);
+      }
+      const bonds = Object.entries(n.bonds).sort((a, b) => b[1] - a[1]);
+      $("feel-bonds").textContent = bonds.length ? "Fond of: " + bonds.map(([k, v]) => k + " " + v.toFixed(2)).join(", ") : "";
+      $("feel-log").replaceChildren(...d.felt.slice().reverse().map(f => el("tr", {},
+        el("td", { textContent: hhmm(f.at) }), el("td", { textContent: f.cause.replace("_", " ") + (f.who ? " (" + f.who + ")" : "") }),
+        el("td", { textContent: Object.entries(f.moved).map(([k, v]) => k + " " + (v >= 0 ? "+" : "") + v.toFixed(3)).join(", ") }),
+        el("td", { textContent: f.why || "" }))));
+    }).catch(() => $("feel-now").textContent = "Couldn't reach her.");
+  }
+  $("feel-range").addEventListener("change", loadFeelings);
+
+  // ---- her log (GET /log.json): newest first, by kind; live while the tab's open
+  const LOG_KINDS = ["heard", "said", "did", "saw", "learned", "felt", "problem", "system"];
+  const logOn = new Set(LOG_KINDS.filter(k => k !== "system"));
+  for (const k of LOG_KINDS) {
+    const box = el("input", { type: "checkbox", checked: logOn.has(k) });
+    box.addEventListener("change", () => { box.checked ? logOn.add(k) : logOn.delete(k); drawLog(); });
+    $("log-kinds").append(el("label", {}, box, k));
+  }
+  let logData = [];
+  function drawLog() {
+    $("log-lines").replaceChildren(...logData.filter(l => logOn.has(l.kind)).reverse().map(l => el("li", {},
+      el("time", { textContent: new Date(l.at * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) }),
+      el("span", { className: "k k-" + l.kind, textContent: l.kind }), el("span", { textContent: l.text }))));
+  }
+  function loadLog() {
+    fetch("/log.json?h=" + $("log-range").value).then(r => r.json()).then(d => { logData = d.lines; drawLog(); })
+      .catch(() => {});
+  }
+  $("log-range").addEventListener("change", loadLog);
+
+  // ---- the HUD (admins: the log's theirs): her last few lines over the camera, while it's showing.
+  const HUD_KINDS = { heard: "HEARD", said: "SAID", saw: "SAW", did: "DID", learned: "LEARN" }, HUD_N = 5;
+  let hudOn = store("hud") !== "0", hudLast = null;
+  function showHud(on) {
+    hudOn = on; store("hud", on ? "1" : "0");
+    $("hudbtn").classList.toggle("on", on); document.body.classList.toggle("hud-on", on);
+    $("hud").hidden = !on; if (on) loadHud();
+  }
+  function loadHud() {
+    if (!hudOn || !camOn || document.hidden || document.body.classList.contains("cant-users")) return;
+    fetch("/log.json?h=0.25").then(r => r.ok ? r.json() : null).then(d => {
+      if (!d) return;
+      const lines = d.lines.filter(l => HUD_KINDS[l.kind]).slice(-HUD_N);
+      const first = hudLast === null;
+      $("hud").replaceChildren(...lines.map((l, i) => el("li", {
+          className: !first && l.at > hudLast ? "new" : "", style: "opacity:" + (0.45 + 0.55 * (i + 1) / lines.length) },
+        el("time", { textContent: new Date(l.at * 1000).toLocaleTimeString([], { hour12: false }) }),
+        el("b", { textContent: HUD_KINDS[l.kind] }),
+        // (without the part of her code that logged it: "speech: ", "voice: heard ")
+        l.text.split("\n")[0].replace(/^(voice: heard|telegram: \w+:|\w+:)\s*/, ""))));
+      hudLast = lines.length ? lines[lines.length - 1].at : 0;
+    }).catch(() => {});
+  }
+  $("hudbtn").addEventListener("click", () => showHud(!hudOn));
+  setInterval(loadHud, 2500);
+  setInterval(() => { if (!$("tab-log").hidden && $("log-live").checked && !document.hidden) loadLog(); }, 10000);
+
+  // ---- people: strangers she's seen (name them, or forget them), and who she knows.
+  const peopleList = $("people-list");
+  function el(tag, props, ...kids) { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; }
+  function loadPeople() {
+    fetch("/people.json").then(r => r.json()).then(d => {
+      peopleList.replaceChildren();
+      if (d.strangers.length) peopleList.append(el("h3", { textContent: "Someone new" }));
+      for (const p of d.strangers) {
+        const input = el("input", { placeholder: "Their name", maxLength: 30 });
+        for (const e of ["keydown", "keyup"]) input.addEventListener(e, ev => ev.stopPropagation());
+        const nameBtn = el("button", { textContent: "that's them" }), forgetBtn = el("button", { textContent: "forget" });
+        nameBtn.onclick = () => {
+          const name = input.value.trim(); if (!name) return input.focus();
+          fetch("/people/" + p.id, { method: "POST", headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ name }) })
+            .then(r => r.json()).then(r => r.error ? alert(r.error) : loadPeople());
+        };
+        forgetBtn.onclick = () => { if (confirm("Forget this person?")) fetch("/people/" + p.id, { method: "DELETE" }).then(loadPeople); };
+        peopleList.append(el("div", { className: "person" },
+          el("img", { src: "/people/" + p.id + ".jpg", alt: "" }),
+          el("div", { className: "info" }, el("b", { textContent: "First seen " + (p.first || "?") }),
+             el("br"), "last " + (p.last || "?") + ", " + p.visits + " visit" + (p.visits === 1 ? "" : "s")),
+          input, nameBtn, forgetBtn));
+      }
+      if (d.known.length) peopleList.append(el("h3", { textContent: "People she knows" }));
+      for (const p of d.known)
+        peopleList.append(el("div", { className: "person" }, el("div", { className: "info" },
+          el("b", { textContent: p.name }), " " + (p.last ? "last seen " + p.last : "not seen yet"))));
+    }).catch(() => {});
+  }
+  // ---- logins (users.py): who I am, what I may do, and (admins) everyone's logins.
+  const PERMS = ["watch", "drive", "record", "listen", "talk", "say", "chat", "claude", "people", "users"];
+  let meShown = null;
+  function showMe(s) {
+    const key = JSON.stringify([s.me, s.perms, s.users, s.online]);
+    if (key === meShown) return;
+    meShown = key;
+    for (const p of PERMS) document.body.classList.toggle("cant-" + p, !(s.perms || PERMS).includes(p));
+    document.body.classList.toggle("no-login", !s.me);
+    const others = (s.online || []).filter(n => n !== s.me);
+    $("me").replaceChildren(
+      ...(others.length ? [el("i", { textContent: "group", title: "Also here: " + others.join(", ") }), String(others.length)] : []),
+      ...(s.me ? [el("a", { href: "/logout", title: "Log out (" + s.me + ")" }, el("i", { textContent: "logout" }))] : []));
+    $("firstuser").hidden = s.users !== false || !(s.perms || []).includes("users");
+    if (!$("firstuser").hidden || $("users").open) loadUsers();
+    fixTab();
+  }
+  function formMsg(form, text) { form.querySelector(".msg").textContent = text || ""; }
+  function post(url, body, method) {
+    return fetch(url, { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(r => r.json().catch(() => ({ error: "Not allowed." })));
+  }
+  for (const f of document.querySelectorAll(".form"))
+    for (const e of ["keydown", "keyup"]) f.addEventListener(e, ev => ev.stopPropagation());
+  function loadUsers() {
+    fetch("/users.json").then(r => r.ok ? r.json() : null).then(d => {
+      if (!d) return;
+      const personOpts = () => [el("option", { value: "", textContent: "nobody she knows" }),
+        ...d.people.map(n => el("option", { value: n, textContent: "is " + n }))];
+      const addPerson = $("adduser").person, keep = addPerson.value;
+      addPerson.replaceChildren(...personOpts()); addPerson.value = keep;
+      const roles = Object.keys(d.roles), roleSel = $("adduser").role;
+      if (!roleSel.options.length) {
+        roleSel.append(...roles.map(r => el("option", { value: r, textContent: r, title: d.roles[r].join(", ") })));
+        roleSel.value = "family";
+      }
+      $("users-list").replaceChildren(...d.users.map(u => {
+        const sel = el("select", {}, ...roles.map(r => el("option", { value: r, textContent: r, title: d.roles[r].join(", ") })));
+        sel.value = u.role;
+        sel.onchange = () => post("/users/" + encodeURIComponent(u.name), { role: sel.value })
+          .then(r => { if (r.error) { alert(r.error); sel.value = u.role; } });
+        const pw = el("button", { textContent: "new password" }), rm = el("button", { textContent: "remove" });
+        pw.onclick = () => {
+          const p = prompt("New password for " + u.name + " (6+). They'll be logged out.");
+          if (p) post("/users/" + encodeURIComponent(u.name), { password: p }).then(r => r.error && alert(r.error));
+        };
+        rm.onclick = () => {
+          if (confirm("Remove " + u.name + "'s login?"))
+            post("/users/" + encodeURIComponent(u.name), {}, "DELETE").then(r => r.error ? alert(r.error) : loadUsers());
+        };
+        const who = el("select", { title: "Who she knows this login as (by face and voice)" }, ...personOpts());
+        who.value = u.person || "";
+        who.onchange = () => post("/users/" + encodeURIComponent(u.name), { person: who.value })
+          .then(r => { if (r.error) { alert(r.error); who.value = u.person || ""; } });
+        const prof = el("button", { textContent: "profile" });
+        const full = [u.first, u.last].filter(Boolean).join(" ");
+        const info = el("span", { className: "info", textContent: [full, u.nicknames && "(" + u.nicknames + ")",
+                                                                    u.email, u.location].filter(Boolean).join(" \u00b7 ") });
+        const edit = el("form", { className: "form", hidden: true },
+          ...PROFILE.map(k => el("input", { name: k, value: u[k] || "", placeholder: PROFILE_LABEL[k], maxLength: 100 })),
+          el("button", { textContent: "save" }), el("span", { className: "msg" }));
+        for (const e of ["keydown", "keyup"]) edit.addEventListener(e, ev => ev.stopPropagation());
+        prof.onclick = () => { edit.hidden = !edit.hidden; };
+        edit.onsubmit = ev => {
+          ev.preventDefault();
+          post("/users/" + encodeURIComponent(u.name), Object.fromEntries(PROFILE.map(k => [k, edit[k].value])))
+            .then(r => r.error ? formMsg(edit, r.error) : loadUsers());
+        };
+        return el("div", {}, el("div", { className: "person" }, el("b", { textContent: u.name }), info, who, sel, prof, pw, rm), edit);
+      }));
+    }).catch(() => {});
+  }
+  $("users").addEventListener("toggle", () => { if ($("users").open) loadUsers(); });
+  $("adduser").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = ev.target;
+    post("/users", Object.assign({ name: f.name.value.trim(), role: f.role.value, password: f.password.value,
+                                   person: f.person.value }, Object.fromEntries(PROFILE.map(k => [k, f[k].value])))).then(r => {
+      formMsg(f, r.error);
+      if (!r.error) { f.reset(); f.role.value = "family"; loadUsers(); }
+    });
+  });
+  $("firstform").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = ev.target;
+    if (f.password.value !== f.again.value) return formMsg(f, "The passwords don't match.");
+    post("/users", { name: f.name.value.trim(), password: f.password.value }).then(r => {
+      if (r.error) return formMsg(f, r.error);
+      location.reload();
+    });
+  });
+  const PROFILE = ["first", "last", "nicknames", "email", "location"];
+  const PROFILE_LABEL = { first: "First name", last: "Last name", nicknames: "Nicknames", email: "Email", location: "Location" };
+  function loadMe() {
+    fetch("/me").then(r => r.json()).then(d => {
+      const f = $("meform");
+      $("melogin").textContent = "Logged in as " + d.login + (d.name !== d.login ? "; she calls you " + d.name : "");
+      for (const k of PROFILE) f[k].value = (d.profile || {})[k] || "";
+    }).catch(() => {});
+  }
+  $("account").addEventListener("toggle", () => { if ($("account").open) loadMe(); });
+  $("meform").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = ev.target;
+    post("/me", Object.fromEntries(PROFILE.map(k => [k, f[k].value]))).then(r => formMsg(f, r.error || "Saved."));
+  });
+  $("pwform").addEventListener("submit", ev => {
+    ev.preventDefault();
+    const f = ev.target;
+    if (f.new.value !== f.again.value) return formMsg(f, "The new passwords don't match.");
+    post("/password", { old: f.old.value, new: f.new.value }).then(r => {
+      formMsg(f, r.error || "Changed.");
+      if (!r.error) f.reset();
+    });
+  });
+
+  $("people").addEventListener("toggle", () => { if ($("people").open) loadPeople(); });
+  loadPeople();
+
+  // ---- camera: reload the stream if it stalls or errors
+  const cam = $("cam");
+  let camOn = true;
+  cam.addEventListener("error", () => setTimeout(() => { if (camOn) cam.src = "/video.mjpg?" + Date.now(); }, 2000));
+
+  // ---- tabs. The camera goes with Controls and Intercom (and stops, to
+  // spare her, on the others); the tab's remembered.
+  const tabBtns = [...document.querySelectorAll("#tabs button")];
+  function showTab(name) {
+    for (const b of tabBtns) b.classList.toggle("on", b.dataset.tab === name);
+    for (const t of document.querySelectorAll(".tab")) t.hidden = t.id !== "tab-" + name;
+    const withCam = name === "controls" || name === "intercom";
+    if (withCam) $("tab-" + name).prepend($("video"));
+    if (withCam !== camOn) {
+      camOn = withCam;
+      if (camOn) cam.src = "/video.mjpg?" + Date.now(); else cam.removeAttribute("src");
+    }
+    if (name === "people") { loadPeople(); if ($("users").open) loadUsers(); }
+    if (name === "feelings") loadFeelings();
+    if (name === "log") loadLog();
+    if (name === "chat") chatText.focus();
+    store("tab", name);
+  }
+  // The first tab they may use, if the one showing isn't (perms arrive with the status).
+  function fixTab() {
+    const on = tabBtns.find(b => b.classList.contains("on"));
+    if (on && on.offsetParent) return;
+    const first = tabBtns.find(b => b.offsetParent);
+    if (first) showTab(first.dataset.tab);
+  }
+  for (const b of tabBtns) b.addEventListener("click", () => showTab(b.dataset.tab));
+  // ? shows what everything does (remembered).
+  function showHelp(on) {
+    document.body.classList.toggle("show-help", on); $("helpbtn").classList.toggle("on", on); store("help", on ? "1" : "0");
+  }
+  $("helpbtn").addEventListener("click", () => showHelp(!document.body.classList.contains("show-help")));
+  showHelp(store("help") === "1");
+  showHud(hudOn);
+  showTab(tabBtns.some(b => b.dataset.tab === store("tab")) ? store("tab") : "controls");
+
+  connect();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+[Unit]
+Description=Copy Patti's data to friday, hourly
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=300
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Boot status on the Sense HAT matrix
+# Start as early as possible: the script waits for the matrix's framebuffer itself.
+DefaultDependencies=no
+After=local-fs.target
+Conflicts=shutdown.target
+Before=shutdown.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/bootstatus.py
+EnvironmentFile=-/etc/default/rp-bootstatus
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=sysinit.target

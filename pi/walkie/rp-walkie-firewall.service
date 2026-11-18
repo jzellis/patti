@@ -1,0 +1,13 @@
+[Unit]
+Description=Walkie channel ports: Tailscale only
+Before=rp-walkie.service
+After=nftables.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f @HOME@/robotpattinson/pi/walkie/walkie.nft
+ExecStop=/usr/sbin/nft delete table inet rp_walkie
+
+[Install]
+WantedBy=multi-user.target

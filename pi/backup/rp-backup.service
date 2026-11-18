@@ -1,0 +1,11 @@
+[Unit]
+Description=Copy Patti's data to friday
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=jzellis
+ExecStart=/usr/bin/python3 /home/jzellis/robotpattinson/pi/backup/backup.py
+Nice=10
+IOSchedulingClass=idle

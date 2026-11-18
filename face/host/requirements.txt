@@ -1,0 +1,6 @@
+# Host side, runs on the Raspberry Pi 4.
+Pillow>=10.0
+pyserial>=3.5
+
+# Deploy tooling (not needed at runtime):
+#   pip install mpremote
